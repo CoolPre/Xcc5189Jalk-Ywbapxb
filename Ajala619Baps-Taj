@@ -1,0 +1,153 @@
+-- CompleteFlyScript.lua
+
+local StarterPlayer = game:GetService("StarterPlayer")
+
+-- Ensure ServerScriptService exists or create it
+local ServerScriptService = game:GetService("ServerScriptService")
+if not ServerScriptService then
+    ServerScriptService = Instance.new("ServerScriptService")
+    ServerScriptService.Name = "ServerScriptService"
+    ServerScriptService.Parent = game
+end
+
+-- Ensure StarterPlayerScripts exists or create it
+local StarterPlayerScripts = StarterPlayer:FindFirstChild("StarterPlayerScripts")
+if not StarterPlayerScripts then
+    StarterPlayerScripts = Instance.new("Folder")
+    StarterPlayerScripts.Name = "StarterPlayerScripts"
+    StarterPlayerScripts.Parent = StarterPlayer
+end
+
+-- Create the LocalScript source code as a string
+local flyScriptSource = [[
+local player = game.Players.LocalPlayer
+local playerGui = player:WaitForChild("PlayerGui")
+local character = player.Character or player.CharacterAdded:Wait()
+local humanoid = character:WaitForChild("Humanoid")
+local camera = workspace.CurrentCamera
+
+-- Fly script variables
+local flying = false
+local speed = 50  -- Initial speed
+
+-- UI setup
+local screenGui = Instance.new("ScreenGui")
+screenGui.Parent = playerGui
+
+local flyButton = Instance.new("TextButton")
+flyButton.Parent = screenGui
+flyButton.Size = UDim2.new(0, 100, 0, 50)
+flyButton.Position = UDim2.new(0.5, -50, 0.9, -25)
+flyButton.Text = "Toggle Fly"
+flyButton.BackgroundColor3 = Color3.new(0, 0, 1)
+flyButton.TextColor3 = Color3.new(1, 1, 1)
+flyButton.Font = Enum.Font.SourceSans
+flyButton.TextSize = 24
+
+local textLabel = Instance.new("TextLabel")
+textLabel.Parent = screenGui
+textLabel.Text = "By: UlyssesnezGaming"
+textLabel.Size = UDim2.new(0, 200, 0, 50)
+textLabel.Position = UDim2.new(0.5, -100, 0, 0)
+textLabel.BackgroundTransparency = 1
+textLabel.TextColor3 = Color3.new(1, 1, 1)
+textLabel.Font = Enum.Font.SourceSans
+textLabel.TextSize = 24
+
+local buttonDecrease = Instance.new("TextButton")
+buttonDecrease.Parent = screenGui
+buttonDecrease.Size = UDim2.new(0, 50, 0, 50)
+buttonDecrease.Position = UDim2.new(0.5, -100, 0.8, -25)
+buttonDecrease.Text = "-"
+buttonDecrease.BackgroundColor3 = Color3.new(1, 0, 0)
+buttonDecrease.TextColor3 = Color3.new(1, 1, 1)
+buttonDecrease.Font = Enum.Font.SourceSans
+buttonDecrease.TextSize = 24
+
+local buttonIncrease = Instance.new("TextButton")
+buttonIncrease.Parent = screenGui
+buttonIncrease.Size = UDim2.new(0, 50, 0, 50)
+buttonIncrease.Position = UDim2.new(0.5, 50, 0.8, -25)
+buttonIncrease.Text = "+"
+buttonIncrease.BackgroundColor3 = Color3.new(0, 1, 0)
+buttonIncrease.TextColor3 = Color3.new(1, 1, 1)
+buttonIncrease.Font = Enum.Font.SourceSans
+buttonIncrease.TextSize = 24
+
+-- Fly script logic functions
+local function startFlying()
+    flying = true
+    humanoid.PlatformStand = true
+end
+
+local function stopFlying()
+    flying = false
+    humanoid.PlatformStand = false
+    humanoid:ChangeState(Enum.HumanoidStateType.GettingUp)
+end
+
+local function decreaseSpeed()
+    speed = math.max(1, speed - 5)  -- Decrease speed, but not below 1
+end
+
+local function increaseSpeed()
+    speed = speed + 5  -- Increase speed
+end
+
+local function onFlyButtonClicked()
+    if flying then
+        stopFlying()
+    else
+        startFlying()
+    end
+end
+
+local function onDecreaseButtonClicked()
+    decreaseSpeed()
+    print("Speed decreased to:", speed)
+end
+
+local function onIncreaseButtonClicked()
+    increaseSpeed()
+    print("Speed increased to:", speed)
+end
+
+local function onRenderStep()
+    if flying then
+        local moveDirection = Vector3.new(0, 0, 0)
+        if game:GetService("UserInputService"):IsKeyDown(Enum.KeyCode.W) then
+            moveDirection = moveDirection + camera.CFrame.LookVector
+        end
+        if game:GetService("UserInputService"):IsKeyDown(Enum.KeyCode.S) then
+            moveDirection = moveDirection - camera.CFrame.LookVector
+        end
+        if game:GetService("UserInputService"):IsKeyDown(Enum.KeyCode.A) then
+            moveDirection = moveDirection - camera.CFrame.RightVector
+        end
+        if game:GetService("UserInputService"):IsKeyDown(Enum.KeyCode.D) then
+            moveDirection = moveDirection + camera.CFrame.RightVector
+        end
+        if game:GetService("UserInputService"):IsKeyDown(Enum.KeyCode.Space) then
+            moveDirection = moveDirection + Vector3.new(0, 1, 0)
+        end
+        if game:GetService("UserInputService"):IsKeyDown(Enum.KeyCode.LeftShift) then
+            moveDirection = moveDirection - Vector3.new(0, 1, 0)
+        end
+
+        character:MoveTo(character.PrimaryPart.Position + moveDirection * speed * game:GetService("RunService").Heartbeat:Wait())
+    end
+end
+
+flyButton.MouseButton1Click:Connect(onFlyButtonClicked)
+buttonDecrease.MouseButton1Click:Connect(onDecreaseButtonClicked)
+buttonIncrease.MouseButton1Click:Connect(onIncreaseButtonClicked)
+game:GetService("RunService").RenderStepped:Connect(onRenderStep)
+]]
+
+-- Create the LocalScript instance
+local flyScript = Instance.new("LocalScript")
+flyScript.Name = "CompleteFlyScript"
+flyScript.Source = flyScriptSource
+
+-- Insert the LocalScript into StarterPlayerScripts
+flyScript.Parent = StarterPlayerScripts
